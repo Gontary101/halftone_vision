@@ -66,8 +66,17 @@ To process a video, run:
 - **P:** Toggle pause/play.
 - **A:** Step backward one frame (when paused).
 - **D:** Step forward one frame (when paused).
-- **S:** Process and save the full video offline using the current parameters. The output is saved as `halftone_output.avi`.
+- **S:** Process and save the full video offline using the current parameters. This reprocesses the entire video and saves it as `halftone_output.avi`.
 - **ESC:** Exit the application.
+
+## Video Demo
+
+Watch the transformation in action! Below are the demo videos:
+
+- **Original Video:** [video.mp4](videos/video.mp4)
+- **Halftone Output Video:** [output.mp4](videos/output.mp4)
+
+These videos showcase the original input and the artistic halftone effect applied by Halftone Vision.
 
 ## How It Works
 
