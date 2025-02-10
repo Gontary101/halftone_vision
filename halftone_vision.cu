@@ -284,7 +284,7 @@ void saveFullVideo(const std::string &videoFilename, int dotSize, int mode) {
         std::cerr << "Error: video file is empty." << std::endl;
         return;
     }
-    sampleFrame = resizeIfNeeded(sampleFrame, 1920, 1080);
+    sampleFrame = resizeIfNeeded(sampleFrame, 1920*sqrt(2), 1080*sqrt(2));
     int outWidth = sampleFrame.cols;
     int outHeight = sampleFrame.rows;
 
