@@ -54,8 +54,8 @@ To process an image, run:
 
 Watch the transformation in action! Below are the demo images:
 
-- **Original Video:** [video.mp4](videos/image_in.png)
-- **Halftone Output Video:** [output.mp4](videos/halftone_output.png)
+- **Original Video:** [image_in.png](videos/image_in.png)
+- **Halftone Output Video:** [halftone_output.png](videos/halftone_output.png)
 
 These images showcase the original input and the artistic halftone effect applied by Halftone Vision.
 
