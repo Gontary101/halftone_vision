@@ -50,6 +50,15 @@ To process an image, run:
 - **S:** Save the current processed image as `halftone_output.png`.
 - **ESC:** Exit the application.
 
+## Image Demo
+
+Watch the transformation in action! Below are the demo images:
+
+- **Original Video:** [video.mp4](videos/image_in.png)
+- **Halftone Output Video:** [output.mp4](videos/halftone_output.png)
+
+These images showcase the original input and the artistic halftone effect applied by Halftone Vision.
+
 ### Video Mode
 
 To process a video, run:

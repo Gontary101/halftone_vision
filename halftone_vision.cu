@@ -1,5 +1,5 @@
 // File: halftone_vision.cu
-// Compile with: nvcc -std=c++11 -O2 dot_video.cu -o dot_video `pkg-config --cflags --libs opencv4`
+// Compile with: nvcc -std=c++11 -O2 halftone_vision.cu -o halftone_vision `pkg-config --cflags --libs opencv4`
 
 #include <iostream>
 #include <opencv2/opencv.hpp>
@@ -7,6 +7,7 @@
 #include <device_launch_parameters.h>
 #include <math.h>
 #include <algorithm>
+#include <cctype>
 
 // --------------------------------------------------------------------------
 // Utility: CUDA error checking macro
@@ -284,7 +285,7 @@ void saveFullVideo(const std::string &videoFilename, int dotSize, int mode) {
         std::cerr << "Error: video file is empty." << std::endl;
         return;
     }
-    sampleFrame = resizeIfNeeded(sampleFrame, 1920*sqrt(2), 1080*sqrt(2));
+    sampleFrame = resizeIfNeeded(sampleFrame, 1920, 1080);
     int outWidth = sampleFrame.cols;
     int outHeight = sampleFrame.rows;
 
@@ -319,7 +320,7 @@ void saveFullVideo(const std::string &videoFilename, int dotSize, int mode) {
 // Main
 // --------------------------------------------------------------------------
 // Usage:
-//    chatgpt_ad_maker <input file (image or video)>
+//    halftone_vision <input file (image or video)>
 //
 // For an image, a window with interactive trackbars ("Dot Size" and "Mode")
 // is displayed. Press 'S' to save the processed image.
@@ -328,36 +329,47 @@ void saveFullVideo(const std::string &videoFilename, int dotSize, int mode) {
 //    - A "Frame" trackbar lets you seek through the video.
 //    - Press 'P' to toggle pause/play.
 //    - When paused, press 'A' or 'D' to step backward or forward one frame.
-//    - Press 'S' to process and save the full video (offline) using the current parameters.
+//    - Press 'S' to process and save the full video offline using the current parameters.
 //    - ESC exits.
 int main(int argc, char** argv)
 {
     if (argc < 2) {
-        std::cout << "Usage: dot video maker <input file (image or video)>" << std::endl;
+        std::cout << "Usage: halftone_vision <input file (image or video)>" << std::endl;
         return 0;
     }
     
     std::string filename = argv[1];
-    cv::VideoCapture cap(filename);
-    bool isVideo = cap.isOpened();
 
+    // Determine if the input file is an image or a video based on its extension.
+    std::string ext = filename.substr(filename.find_last_of('.') + 1);
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    bool isVideo = true;
+    if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "bmp" || ext == "tiff") {
+         isVideo = false;
+    } else {
+         // If not an image extension, attempt to open as video.
+         cv::VideoCapture capTest(filename);
+         if (!capTest.isOpened()) {
+              isVideo = false;
+         }
+         capTest.release();
+    }
+    
     cv::namedWindow("Halftone", cv::WINDOW_NORMAL);
-
-    // Create trackbars without value pointers to avoid deprecation warnings.
     cv::createTrackbar("Dot Size", "Halftone", nullptr, 50, nullptr);
     cv::setTrackbarPos("Dot Size", "Halftone", 10);
     cv::createTrackbar("Mode (0:BW, 1:Color)", "Halftone", nullptr, 1, nullptr);
     cv::setTrackbarPos("Mode (0:BW, 1:Color)", "Halftone", 0);
-
+    
     if (!isVideo) {
-        // ---- Process a still image ----
+        // Process as an image.
         cv::Mat image = cv::imread(filename);
         if (image.empty()) {
             std::cerr << "Error loading image: " << filename << std::endl;
             return 1;
         }
-        image = resizeIfNeeded(image, 1920, 1080);
-
+        image = resizeIfNeeded(image, 1920*sqrt(2), 1080*sqrt(2));
+    
         while (true) {
             int dotSize = cv::getTrackbarPos("Dot Size", "Halftone");
             int mode = cv::getTrackbarPos("Mode (0:BW, 1:Color)", "Halftone");
@@ -373,25 +385,30 @@ int main(int argc, char** argv)
         }
     }
     else {
-        // ---- Process a video file interactively ----
+        // Process as a video.
+        cv::VideoCapture cap(filename);
+        if (!cap.isOpened()) {
+            std::cerr << "Error opening video: " << filename << std::endl;
+            return 1;
+        }
         int totalFrames = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
         cv::createTrackbar("Frame", "Halftone", nullptr, totalFrames - 1, nullptr);
         cv::setTrackbarPos("Frame", "Halftone", 0);
-
+    
         bool paused = false;
         int currentFrame = 0;
         cv::Mat lastFrame;
-
+    
         while (true) {
             int dotSize = cv::getTrackbarPos("Dot Size", "Halftone");
             int mode = cv::getTrackbarPos("Mode (0:BW, 1:Color)", "Halftone");
             int trackFrame = cv::getTrackbarPos("Frame", "Halftone");
-
+    
             cv::Mat frame;
             if (!paused) {
                 cap >> frame;
                 if (frame.empty()) {
-                    // End reached: stay paused for frame review.
+                    // End reached: remain paused for frame review.
                     paused = true;
                 }
             }
@@ -409,14 +426,14 @@ int main(int argc, char** argv)
             } else {
                 frame = lastFrame.clone();
             }
-
+    
             frame = resizeIfNeeded(frame, 1920, 1080);
             cv::Mat output = processImage(frame, dotSize, mode);
             cv::imshow("Halftone", output);
-
+    
             int key = cv::waitKey(30);
             if (key == 27) break;  // ESC to exit
-
+    
             // Toggle pause/play with 'P'
             if (key == 'p' || key == 'P') {
                 paused = !paused;
